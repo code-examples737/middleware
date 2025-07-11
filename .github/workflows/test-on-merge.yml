@@ -1,0 +1,36 @@
+name: Test on Merge to Master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '21'
+      - name: Set up environment variables
+        run: |
+          echo "PASSWORD=${{ secrets.PASSWORD }}" >> $GITHUB_ENV
+          echo "USERNAME=${{ secrets.USERNAME }}" >> $GITHUB_ENV
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        continue-on-error: true
+
+  disable-merge-button:
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    if: failure()
+    steps:
+      - name: Disable merge button
+        run: echo "mergeable=false" >> $GITHUB_ENV
